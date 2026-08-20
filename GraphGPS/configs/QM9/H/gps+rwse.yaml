@@ -1,0 +1,73 @@
+out_dir: results
+metric_best: mae
+metric_agg: argmin
+seed: 0
+wandb:
+  use: true
+  project: QM9
+  group: H-RWSE
+  entity: YOUR_ENTITY_HERE
+dataset:
+  format: EmJ-QM9
+  name: x
+  task: graph
+  task_type: regression
+  transductive: false
+  follow_edge_batch: true
+  node_encoder: true
+  node_encoder_name: MLPNodeEnc+RWSE
+  node_encoder_init_dim: 15
+  node_encoder_hid_dim: 64
+  node_encoder_depths: 2
+  node_encoder_bn: true
+  edge_encoder: true
+  edge_encoder_name: TypeDictEdge
+  edge_encoder_num_types: 5
+  edge_encoder_bn: false
+  graph_encoder: false
+posenc_RWSE:
+  enable: true
+  kernel:
+    times_func: range(1,21)
+  model: mlp_flat
+  dim_pe: 28
+  raw_norm_type: BatchNorm
+  layers: 2
+  norm: batch_norm
+train:
+  mode: custom
+  batch_size: 128
+  eval_period: 1
+  ckpt_period: 100
+model:
+  type: GPSModel
+  loss_fun: l1
+  edge_decoding: dot
+  graph_pooling: add
+gt:
+  layer_type: GINE+Transformer
+  layers: 10
+  n_heads: 4
+  dim_hidden: 64
+  dropout: 0.0
+  attn_dropout: 0.5
+  layer_norm: false
+  batch_norm: true
+gnn:
+  head: san_graph
+  layers_pre_mp: 0
+  layers_post_mp: 3
+  dim_inner: 64
+  batchnorm: true
+  act: relu
+  dropout: 0.0
+  agg: mean
+  normalize_adj: false
+optim:
+  clip_grad_norm: true
+  optimizer: adamW
+  weight_decay: 1e-5
+  base_lr: 0.001
+  max_epoch: 1200
+  scheduler: cosine_with_warmup
+  num_warmup_epochs: 20

@@ -1,0 +1,63 @@
+out_dir: results
+metric_best: mae
+metric_agg: argmin
+wandb:
+  use: True
+  project: Peptides-Struct
+  group: MoSE-S
+  entity: YOUR_ENTITY_HERE
+dataset:
+  format: OGB
+  name: peptides-structural-spasm
+  task: graph
+  task_type: regression
+  transductive: False
+  node_encoder: True
+  # node_encoder_name: Atom+LapPE
+  node_encoder_name: Atom+NodeCountEnc
+  node_encoder_bn: False
+  edge_encoder: True
+  edge_encoder_name: Bond
+  edge_encoder_bn: False
+ctenc_NodeCountEnc:
+  raw_bn: False
+  dim_ogct: 43
+  dim_hid: 36
+  dim_ct: 24
+  n_layers: 2
+  dropout: 0.0
+  norm: batch_norm
+train:
+  mode: custom
+  batch_size: 128
+  eval_period: 1
+  ckpt_period: 100
+model:
+  type: GPSModel
+  loss_fun: l1
+  graph_pooling: mean
+gt:
+  layer_type: None+Transformer
+  layers: 1
+  n_heads: 2
+  dim_hidden: 36  # `gt.dim_hidden` must match `gnn.dim_inner`
+  dropout: 0.3
+  attn_dropout: 0.5
+  layer_norm: False
+  batch_norm: True
+gnn:
+  head: default
+  layers_pre_mp: 0
+  layers_post_mp: 1  # Not used when `gnn.head: san_graph`
+  dim_inner: 36  # `gt.dim_hidden` must match `gnn.dim_inner`
+  batchnorm: True
+  act: relu
+  dropout: 0.0
+optim:
+  clip_grad_norm: True
+  optimizer: adamW
+  weight_decay: 0.01
+  base_lr: 0.0003
+  max_epoch: 200
+  scheduler: cosine_with_warmup
+  num_warmup_epochs: 10

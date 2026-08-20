@@ -1,0 +1,9 @@
+model_name: 'GAT'
+project: 'collab-GAT-PE'
+group: 'GAT-path4-multsum-PE'
+name: 'GAT-path4-multsum-PE'
+use_counts: True
+count_files: ['collab_path4_counts.json']
+idx_list: []
+pe_dim: 8
+description: '4 path, positional encoding, with multsum'

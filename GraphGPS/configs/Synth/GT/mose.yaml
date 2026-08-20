@@ -1,0 +1,59 @@
+out_dir: results
+metric_best: mae
+metric_agg: argmin
+seed: 0
+wandb:
+  use: True
+  project: Synth-SA-fracdom
+  group: MoSE
+  entity: YOUR_ENTITY_HERE
+dataset:
+  format: EmJ-Synth-Spasm10
+  name: FracDom
+  task: graph
+  task_type: regression
+  transductive: False
+  follow_edge_batch: True #set to true when processing edge features in parallel
+  node_encoder: True
+  node_encoder_name: MLPNodeEnc
+  node_encoder_init_dim: 43
+  node_encoder_hid_dim: 64
+  node_encoder_depths: 2
+train:
+  mode: custom
+  batch_size: 128
+  eval_period: 1
+  ckpt_period: 100
+  pred_logger: True
+model:
+  type: GPSModel
+  loss_fun: l1
+  edge_decoding: dot
+  graph_pooling: add
+gt:
+  layer_type: None+Transformer  # CustomGatedGCN+Performer
+  layers: 10
+  n_heads: 4
+  dim_hidden: 64  # `gt.dim_hidden` must match `gnn.dim_inner`
+  dropout: 0.0
+  attn_dropout: 0.5
+  layer_norm: False
+  batch_norm: True
+gnn:
+  head: san_graph
+  layers_pre_mp: 0
+  layers_post_mp: 3  # Not used when `gnn.head: san_graph`
+  dim_inner: 64  # `gt.dim_hidden` must match `gnn.dim_inner`
+  batchnorm: True
+  act: relu
+  dropout: 0.0
+  agg: mean
+  normalize_adj: False
+optim:
+  clip_grad_norm: True
+  optimizer: adamW
+  weight_decay: 1e-3
+  base_lr: 0.0001
+  max_epoch: 1200
+  scheduler: cosine_with_warmup
+  num_warmup_epochs: 30

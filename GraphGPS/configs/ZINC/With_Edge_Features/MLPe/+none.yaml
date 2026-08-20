@@ -1,0 +1,65 @@
+out_dir: results
+metric_best: mae
+metric_agg: argmin
+seed: 0
+wandb:
+  use: True
+  project: ZINC-MLPe
+  group: Spasm
+  entity: YOUR_ENTITY_HERE
+dataset:
+  format: PyG-ZINC
+  name: subset
+  task: graph
+  task_type: regression
+  transductive: False
+  follow_edge_batch: True #set to true when processing edge features in parallel
+  node_encoder: True
+  node_encoder_name: TypeDictNode
+  node_encoder_num_types: 28
+  node_encoder_bn: False
+  edge_encoder: True
+  edge_encoder_name: TypeDictEdge
+  edge_encoder_num_types: 4
+  edge_encoder_bn: False
+train:
+  mode: custom
+  batch_size: 32
+  eval_period: 1
+  ckpt_period: 100
+  enforce_param_budget: true
+  param_budget: 500000
+model:
+  type: MLPeGraphReg
+  loss_fun: l1
+  edge_decoding: dot
+  graph_pooling: add
+mlp:
+  layers: 2
+  dim_hidden: 64
+  residual_connection: True
+  batch_norm: True
+  dropout: 0.1
+  head:
+    type: san_graph
+    hidden_layers: 2
+  edge_encoder:
+    layers: 8
+    dim_hidden: 128
+    residual_connection: True
+    batch_norm: True
+    dropout: 0.1
+  graph_encoder:
+    layers: 4
+    dim_hidden: 192
+    residual_connection: True
+    batch_norm: True
+    dropout: 0.1
+optim:
+  clip_grad_norm: False
+  optimizer: adam
+  weight_decay: 1e-3
+  base_lr: 0.001
+  max_epoch: 1200
+  scheduler: custom_cosine_with_warmup #orginally cosine_with_warmup
+  num_warmup_epochs: 10

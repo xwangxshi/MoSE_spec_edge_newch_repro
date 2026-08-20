@@ -1,0 +1,64 @@
+out_dir: results
+metric_best: mae
+metric_agg: argmin
+wandb:
+  use: True
+  project: ZINC-MLP
+  group: RWSE+MoSE
+  entity: YOUR_ENTITY_HERE
+dataset:
+  format: PyG-ZINC-Spasm
+  name: subset
+  task: graph
+  task_type: regression
+  transductive: False
+  node_encoder: True
+  node_encoder_name: TypeDictNode+NodeCountEnc+RWSE
+  node_encoder_num_types: 28
+  node_encoder_bn: False
+  edge_encoder: False
+posenc_RWSE:
+  enable: True
+  kernel:
+    times_func: range(1,21)
+  model: mlp_flat
+  dim_pe: 28
+  raw_norm_type: BatchNorm
+  layers: 2
+  norm: "batch_norm"
+  stack_on_h: False
+ctenc_NodeCountEnc:
+  raw_bn: False
+  dim_ogct: 42
+  dim_hid: 42
+  dim_ct: 42
+  n_layers: 2
+  dropout: 0.0
+  norm: batch_norm
+  stack_on_h: False
+train:
+  mode: custom
+  batch_size: 128
+  eval_period: 1
+  ckpt_period: 100
+  enforce_param_budget: true
+  param_budget: 500000
+model:
+  type: MLPGraphReg
+  loss_fun: l1
+  edge_decoding: dot
+  graph_pooling: add
+mlp:
+  layers: 8
+  dim_hidden: 220
+  residual_connection: True
+  batch_norm: False
+  dropout: 0.1
+  head: san_graph
+optim:
+  clip_grad_norm: False
+  optimizer: adam
+  weight_decay: 1e-3
+  base_lr: 0.001
+  max_epoch: 1200
+  sceduler: StepLR_with_warmup

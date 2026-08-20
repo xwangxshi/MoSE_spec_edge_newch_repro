@@ -1,0 +1,45 @@
+out_dir: results
+metric_best: mae
+metric_agg: argmin
+wandb:
+  use: True
+  project: ZINC-MLP
+  group: None
+  entity: YOUR_ENTITY_HERE
+dataset:
+  format: PyG-ZINC
+  name: subset
+  task: graph
+  task_type: regression
+  transductive: False
+  node_encoder: True
+  node_encoder_name: TypeDictNode
+  node_encoder_num_types: 28
+  node_encoder_bn: False
+  edge_encoder: False
+train:
+  mode: custom
+  batch_size: 128
+  eval_period: 1
+  ckpt_period: 100
+  enforce_param_budget: true
+  param_budget: 500000
+model:
+  type: MLPGraphReg
+  loss_fun: l1
+  edge_decoding: dot
+  graph_pooling: add
+mlp:
+  layers: 4
+  dim_hidden: 156
+  residual_connection: True
+  batch_norm: False
+  dropout: 0.1
+  head: san_graph
+optim:
+  clip_grad_norm: False
+  optimizer: adam
+  weight_decay: 1e-3
+  base_lr: 0.001
+  max_epoch: 1200
+  sceduler: StepLR_with_warmup

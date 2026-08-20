@@ -1,0 +1,67 @@
+# Editors and operating-system metadata
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Python caches, test output, packaging, and local environments
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+*.egg-info/
+.env
+.venv/
+env/
+venv/
+
+# Experiment output and service logs
+**/wandb/
+**/slurm_history/
+**/checkpoints/
+**/ckpt/
+*.log
+
+# Model weights and generated numeric data
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.joblib
+*.pickle
+*.pkl
+*.dill
+*.bin
+
+# Downloaded/tabular datasets and archives
+*.csv
+*.tsv
+*.jsonl
+*.parquet
+*.feather
+*.arrow
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+*.bz2
+*.xz
+*.7z
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3

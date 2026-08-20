@@ -1,0 +1,75 @@
+out_dir: results
+metric_best: mae
+metric_agg: argmin
+wandb:
+  use: True
+  project: ZINC-GTe
+  group: RWSE+MoSE
+  entity: YOUR_ENTITY_HERE
+dataset:
+  format: PyG-ZINC-Spasm
+  name: subset
+  task: graph
+  task_type: regression
+  transductive: False
+  node_encoder: True
+  node_encoder_name: TypeDictNode+NodeCountEnc+RWSE
+  node_encoder_num_types: 28
+  node_encoder_bn: False
+  edge_encoder: False
+posenc_RWSE:
+  enable: True
+  kernel:
+    times_func: range(1,21)
+  model: mlp_flat
+  dim_pe: 28
+  raw_norm_type: BatchNorm
+  layers: 2
+  norm: "batch_norm"
+ctenc_NodeCountEnc:
+  raw_bn: False
+  dim_ogct: 42
+  dim_hid: 42
+  dim_ct: 28
+  n_layers: 2
+  dropout: 0.0
+  norm: batch_norm
+train:
+  mode: custom
+  batch_size: 32
+  eval_period: 1
+  ckpt_period: 100
+model:
+  type: SAedge
+  loss_fun: l1
+  edge_decoding: dot
+  graph_pooling: add
+gt:
+  layers: 10
+  n_heads: 4
+  dim_hidden: 64  # `gt.dim_hidden` must match `gnn.dim_inner`
+  edge_encoder_num_types: 4
+  dropout: 0.0
+  layer_norm: False
+  batch_norm: True
+  residual: True
+  varied_width: True
+  dim_initial: 92
+  initial_depth: 4
+gnn:
+  head: san_graph
+  layers_pre_mp: 0 #not usd when set to 0
+  dim_inner: 64  # `gt.dim_hidden` must match `gnn.dim_inner`
+  batchnorm: True
+  act: relu
+  dropout: 0.0
+  agg: mean
+  normalize_adj: False
+optim:
+  clip_grad_norm: True
+  optimizer: adamW
+  weight_decay: 1e-5
+  base_lr: 0.001
+  max_epoch: 2000
+  scheduler: cosine_with_warmup
+  num_warmup_epochs: 50
