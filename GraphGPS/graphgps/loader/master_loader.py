@@ -20,6 +20,7 @@ from graphgps.loader.dataset.malnet_tiny import MalNetTiny
 from graphgps.loader.dataset.voc_superpixels import VOCSuperpixels
 from graphgps.loader.split_generator import (prepare_splits,
                                              set_dataset_splits)
+from graphgps.loader.spectral_edge import attach_specmose_edge_cache
 from graphgps.transform.posenc_stats import compute_posenc_stats
 from graphgps.transform.task_preprocessing import task_specific_preprocessing
 from graphgps.transform.transforms import (pre_transform_in_memory,
@@ -260,6 +261,22 @@ def load_dataset_master(format, name, dataset_dir):
         timestr = time.strftime('%H:%M:%S', time.gmtime(elapsed)) \
                   + f'{elapsed:.2f}'[-3:]
         logging.info(f"Done! Took {timestr}")
+
+    if cfg.specmose_edge.enable:
+        if format != 'PyG-ZINC' or name != 'subset':
+            raise ValueError(
+                'The current SpecMoSE edge cache is defined only for '
+                'PyG-ZINC subset'
+            )
+        dataset = attach_specmose_edge_cache(
+            dataset,
+            cfg.specmose_edge.cache_dir,
+            expected_templates=cfg.specmose_edge.num_templates,
+            expected_basis=cfg.specmose_edge.num_basis,
+            expected_max_total_degree=(
+                cfg.specmose_edge.max_total_degree
+            ),
+        )
 
     # Set standard dataset train/val/test splits
     if hasattr(dataset, 'split_idxs'):
