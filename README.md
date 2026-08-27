@@ -1,34 +1,3 @@
-# MoSE
-
-This is the official code base for the ICLR 2025 paper: _["Homomorphism Counts as Structural Encodings for Graph Learning"](https://arxiv.org/abs/2410.18676)_.
-
-Our repository combines the repositories from:
-- [GraphGPS](https://github.com/rampasek/GraphGPS.git) from ["Recipe for a General, Powerful, Scalable Graph Transformer"](https://arxiv.org/abs/2205.12454)
-- [hombasis-gnn](https://github.com/ejin700/hombasis-gnn.git) from ["Homomorphism Counts for Graph Neural Networks: All About That Basis"](https://arxiv.org/abs/2402.08595)
-- [GRIT](https://github.com/LiamMa/GRIT) from ["Graph Inductive Biases in Transformers without Message Passing"](https://arxiv.org/abs/2305.17589)
-
-## Python Virtual Enviroment Setup
-
-```bash
-conda create --name HomEnv python=3.12.3
-conda activate HomEnv
-
-pip install torch==2.2.0+cu118 -f https://download.pytorch.org/whl/torch_stable.html
-pip install torch_geometric==2.5.3
-
-pip install ogb easydict pyyaml neptune wandb yacs
-
-pip install opt_einsum
-
-pip install torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-2.2.1+cu118.html
-
-pip install tensorboardX
-pip install performer-pytorch
-pip install torchmetrics
-pip install numpy==1.26.4
-
-pip install dill
-```
 
 ## Zinc Data Setup
 To set up the data necessary for MoSE experiments on ZINC, unzip the `hombasis-gt/hombasis-bench/data/zinc-data.zip` file into the `hombasis-gt/hombasis-bench/data` directory. 
