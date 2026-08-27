@@ -1,0 +1,75 @@
+out_dir: results
+metric_best: mae
+metric_agg: argmin
+wandb:
+  use: True
+  project: ZINC-GINeVN
+  group: SpecMoSE-Edge-Random
+  entity: YOUR_ENTITY_HERE
+dataset:
+  # Attach SpecMoSE to the original ZINC graph, then add the virtual node.
+  format: PyG-ZINC
+  name: subset
+  task: graph
+  task_type: regression
+  transductive: False
+  node_encoder: True
+  node_encoder_name: TypeDictNode
+  node_encoder_num_types: 28
+  node_encoder_bn: False
+  edge_encoder: True
+  edge_encoder_name: TypeDictEdge+SpecMoSE
+  edge_encoder_num_types: 4
+  edge_encoder_bn: False
+  virtual_node: True
+specmose_edge:
+  enable: True
+  cache_dir: hombasis-gt/hombasis-bench/data/zinc-data/zinc12k_two_root_mose_cheby_k10_edge_v1
+  num_templates: 42
+  num_basis: 28
+  max_total_degree: 6
+  num_learned_filters: 27
+  template_dim: 28
+  dim_struct: 42
+  dropout: 0.0
+train:
+  mode: custom
+  batch_size: 32
+  eval_period: 1
+  ckpt_period: 100
+model:
+  type: GPSModel
+  loss_fun: l1
+  edge_decoding: dot
+  graph_pooling: add
+gt:
+  layer_type: GINE+None
+  layers: 4
+  n_heads: 4
+  dim_hidden: 92
+  dropout: 0.0
+  attn_dropout: 0.5
+  layer_norm: False
+  batch_norm: True
+  varied_width: False
+  dim_initial: 92
+  initial_depth: 2
+  ff: False
+gnn:
+  head: san_graph
+  layers_pre_mp: 0
+  layers_post_mp: 3
+  dim_inner: 92
+  batchnorm: True
+  act: relu
+  dropout: 0.0
+  agg: mean
+  normalize_adj: False
+optim:
+  clip_grad_norm: True
+  optimizer: adamW
+  weight_decay: 1e-5
+  base_lr: 0.001
+  max_epoch: 1000
+  scheduler: cosine_with_warmup
+  num_warmup_epochs: 50

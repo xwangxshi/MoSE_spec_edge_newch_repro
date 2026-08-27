@@ -5,7 +5,10 @@ import logging
 
 import graphgps  # noqa, register custom modules
 from graphgps.agg_runs import agg_runs
-from graphgps.optimizer.extra_optimizers import ExtendedSchedulerConfig
+from graphgps.optimizer.extra_optimizers import (
+    ExtendedSchedulerConfig,
+    create_specmose_adamw,
+)
 
 from torch_geometric.graphgym.cmd_args import parse_args
 from torch_geometric.graphgym.config import (cfg, dump_cfg,
@@ -176,8 +179,23 @@ if __name__ == '__main__':
                 model, cfg.pretrained.dir, cfg.pretrained.freeze_main,
                 cfg.pretrained.reset_prediction_head, seed=cfg.seed
             )
-        optimizer = create_optimizer(model.parameters(),
-                                     new_optimizer_config(cfg))
+        if cfg.specmose_edge.enable:
+            if cfg.optim.optimizer != 'adamW':
+                raise ValueError('SpecMoSE parameter groups require adamW')
+            optimizer, specmose_decay_names = create_specmose_adamw(
+                model,
+                base_lr=cfg.optim.base_lr,
+                backbone_weight_decay=cfg.optim.weight_decay,
+                specmose_weight_decay=cfg.specmose_edge.weight_decay,
+            )
+            logging.info(
+                'SpecMoSE AdamW group: weight_decay=%s parameters=%s',
+                cfg.specmose_edge.weight_decay,
+                specmose_decay_names,
+            )
+        else:
+            optimizer = create_optimizer(model.parameters(),
+                                         new_optimizer_config(cfg))
         scheduler = create_scheduler(optimizer, new_scheduler_config(cfg))
         # Print model info
         logging.info(model)

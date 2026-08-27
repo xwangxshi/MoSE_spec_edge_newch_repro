@@ -22,6 +22,7 @@ from graphgps.loader.split_generator import (prepare_splits,
                                              set_dataset_splits)
 from graphgps.loader.spectral_edge import attach_specmose_edge_cache
 from graphgps.transform.posenc_stats import compute_posenc_stats
+from graphgps.transform.specmose_virtual_node import SpecMoSEVirtualNode
 from graphgps.transform.task_preprocessing import task_specific_preprocessing
 from graphgps.transform.transforms import (pre_transform_in_memory,
                                            typecast_x, concat_x_and_pos,
@@ -277,6 +278,13 @@ def load_dataset_master(format, name, dataset_dir):
                 cfg.specmose_edge.max_total_degree
             ),
         )
+        if getattr(cfg.dataset, 'virtual_node', False):
+            if dataset.transform is not None:
+                raise ValueError(
+                    'SpecMoSE virtual-node loading requires an unused '
+                    'runtime dataset transform'
+                )
+            dataset.transform = SpecMoSEVirtualNode()
 
     # Set standard dataset train/val/test splits
     if hasattr(dataset, 'split_idxs'):

@@ -80,3 +80,32 @@ def edge_restricted_pair_responses(
         )
         responses[:, :, response_index] = edge_kernel @ edge_signals
     return responses
+
+
+def edge_restricted_equality_responses(
+    polynomial_matrices,
+    edge_index,
+    degree_pairs,
+):
+    """Compute ``Res_E[T_a(S) I T_b(S)]`` for an equality pair signal.
+
+    The Chebyshev product identity gives
+
+    ``T_a(S) T_b(S) = (T_{a+b}(S) + T_{|a-b|}(S)) / 2``.
+
+    This avoids materializing the dense identity signal while retaining the
+    same total-degree ``(a, b)`` interface used by every other template.
+    """
+    sources, targets = edge_index
+    responses = torch.empty(
+        (edge_index.shape[1], len(degree_pairs)),
+        dtype=polynomial_matrices[0].dtype,
+        device=polynomial_matrices[0].device,
+    )
+    for response_index, (left_degree, right_degree) in enumerate(degree_pairs):
+        total = polynomial_matrices[left_degree + right_degree]
+        difference = polynomial_matrices[abs(left_degree - right_degree)]
+        responses[:, response_index] = 0.5 * (
+            total[sources, targets] + difference[sources, targets]
+        )
+    return responses

@@ -94,6 +94,11 @@ class TypeDictNodeEncoder(torch.nn.Module):
     def forward(self, batch):
         # Encode just the first dimension if more exist
         batch.x = self.encoder(batch.x[:, 0])
+        if (
+            hasattr(batch, 'node_is_original')
+            and cfg.specmose_edge.zero_virtual_node_embedding
+        ):
+            batch.x = batch.x * batch.node_is_original[:, None]
 
         return batch
 

@@ -25,8 +25,18 @@ def attach_specmose_edge_cache(
         metadata = json.load(handle)
     if not metadata['complete'] or not metadata['complete_zinc12k']:
         raise ValueError(f'Incomplete SpecMoSE cache: {cache_dir}')
-    if metadata['format'] != 'edge_restricted_two_root_mose_chebyshev':
+    if metadata['format'] != (
+            'edge_restricted_two_root_mose_equality_chebyshev'):
         raise ValueError(f'Unexpected SpecMoSE cache format: {metadata}')
+    replacement = metadata.get('replaced_input_channel')
+    if replacement != {
+        'index': 13,
+        'old_name': 'hom_13',
+        'old_relation': 'ordered two-root K4 hom-count (all zero on ZINC)',
+        'new_name': 'equality_delta',
+        'new_relation': 'Delta(u,v) = 1[u=v]',
+    }:
+        raise ValueError('SpecMoSE cache has an unexpected equality channel')
     if metadata['input_signal_count'] != expected_templates:
         raise ValueError('SpecMoSE template count does not match config')
     source_basis = metadata['basis_count']
@@ -58,7 +68,9 @@ def attach_specmose_edge_cache(
         raise ValueError('SpecMoSE cache uses an unexpected operator')
     storage = metadata['storage_semantics']
     if storage != {
-        'pair_support': 'original directed molecular edges',
+        'ordinary_input_pair_support': 'original directed molecular edges',
+        'equality_input_pair_support': 'node-pair diagonal',
+        'stored_output_support': 'original directed molecular edges',
         'operation': 'final restriction Res_E after full pair filtering',
         'intermediate_edge_truncation': False,
         'full_v_squared_materialized': False,

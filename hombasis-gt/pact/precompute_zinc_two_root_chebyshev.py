@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Precompute degree-truncated Chebyshev responses for ZINC two-root MoSE.
+"""Precompute degree-truncated Chebyshev responses for ZINC edge SpecMoSE.
 
 For every graph and two-root input signal Phi_t, this script computes
 
     Res_E[T_a(L_norm - I) Phi_t T_b(L_norm - I)],  a + b <= K,
 
-where E is the original directed molecular edge set. Intermediate pair
-responses are never restricted to E. The output is a float32 NumPy memmap with
-shape [total_directed_edges, num_input_signals, num_polynomial_basis].
+where E is the original directed molecular edge set. The all-zero K4 hom-count
+template at channel 13 is replaced by the equality relation Delta = I. Pair
+responses are never restricted before the final Res_E operation. The output is
+a float32 NumPy memmap with shape [edges, templates, polynomial basis].
 """
 
 import argparse
@@ -25,10 +26,15 @@ import torch
 
 from pact.chebyshev_pair import (
     chebyshev_matrices,
+    edge_restricted_equality_responses,
     edge_restricted_pair_responses,
     shifted_normalized_laplacian,
     total_degree_pairs,
 )
+
+
+EQUALITY_CHANNEL = 13
+EQUALITY_FEATURE_NAME = 'equality_delta'
 
 
 def _sha256(path):
@@ -61,7 +67,7 @@ def _parse_args():
     parser.add_argument(
         '--output-dir',
         type=Path,
-        default=data_dir / 'zinc12k_two_root_mose_cheby_k10_edge_v1',
+        default=data_dir / 'zinc12k_two_root_mose_eq_cheby_k10_edge_v1',
     )
     parser.add_argument('--max-degree', type=int, default=10)
     parser.add_argument('--limit', type=int, default=None)
@@ -122,6 +128,12 @@ def main():
     numerators = source['signal_numerators'][:total_edges].to(torch.int64)
     denominators = source['signal_denominators'].to(torch.int64)
     num_signals = numerators.shape[1]
+    if source['feature_names'][EQUALITY_CHANNEL] != 'hom_13':
+        raise ValueError('Expected the all-zero K4 template at channel 13')
+    if torch.count_nonzero(numerators[:, EQUALITY_CHANNEL]):
+        raise ValueError('K4 source channel 13 is not identically zero')
+    feature_names = list(source['feature_names'])
+    feature_names[EQUALITY_CHANNEL] = EQUALITY_FEATURE_NAME
     degree_pairs = total_degree_pairs(args.max_degree)
     num_basis = len(degree_pairs)
 
@@ -188,6 +200,7 @@ def main():
         polynomials = chebyshev_matrices(operator, args.max_degree)
 
         active_templates = edge_signals.ne(0).any(dim=0)
+        active_templates[EQUALITY_CHANNEL] = False
         active_template_total += int(active_templates.sum())
         graph_responses = torch.zeros(
             (upper - lower, num_signals, num_basis),
@@ -198,6 +211,13 @@ def main():
             graph_edges,
             edge_signals[:, active_templates],
             degree_pairs,
+        )
+        graph_responses[:, EQUALITY_CHANNEL] = (
+            edge_restricted_equality_responses(
+                polynomials,
+                graph_edges,
+                degree_pairs,
+            )
         )
 
         torch.testing.assert_close(
@@ -217,6 +237,10 @@ def main():
                 expected = _dense_reference(
                     polynomials, graph_edges, edge_signals, pair
                 )
+                equality_expected = (
+                    polynomials[pair[0]] @ polynomials[pair[1]]
+                )[graph_edges[0], graph_edges[1]]
+                expected[:, EQUALITY_CHANNEL] = equality_expected
                 torch.testing.assert_close(
                     graph_responses[:, :, response_index],
                     expected,
@@ -266,7 +290,7 @@ def main():
     }
     repo_root = Path(__file__).resolve().parents[2]
     metadata = {
-        'format': 'edge_restricted_two_root_mose_chebyshev',
+        'format': 'edge_restricted_two_root_mose_equality_chebyshev',
         'format_version': 1,
         'created_at_utc': datetime.now(timezone.utc).isoformat(),
         'complete': True,
@@ -274,7 +298,14 @@ def main():
         'graph_count': graph_count,
         'directed_edge_count': total_edges,
         'input_signal_count': num_signals,
-        'input_feature_names': source['feature_names'],
+        'input_feature_names': feature_names,
+        'replaced_input_channel': {
+            'index': EQUALITY_CHANNEL,
+            'old_name': source['feature_names'][EQUALITY_CHANNEL],
+            'old_relation': 'ordered two-root K4 hom-count (all zero on ZINC)',
+            'new_name': EQUALITY_FEATURE_NAME,
+            'new_relation': 'Delta(u,v) = 1[u=v]',
+        },
         'max_total_degree': args.max_degree,
         'basis_count': num_basis,
         'basis_order': 'graded lexicographic: total degree, then left degree',
@@ -291,10 +322,13 @@ def main():
             'adjacency': 'unweighted, no added self-loops',
         },
         'response_definition': (
-            'T_a(L_norm-I) Phi_t T_b(L_norm-I), a+b<=K'
+            'T_a(L_norm-I) Phi_t T_b(L_norm-I), a+b<=K; '
+            'Phi_13 is equality Delta=I'
         ),
         'storage_semantics': {
-            'pair_support': 'original directed molecular edges',
+            'ordinary_input_pair_support': 'original directed molecular edges',
+            'equality_input_pair_support': 'node-pair diagonal',
+            'stored_output_support': 'original directed molecular edges',
             'operation': 'final restriction Res_E after full pair filtering',
             'intermediate_edge_truncation': False,
             'full_v_squared_materialized': False,
@@ -323,6 +357,8 @@ def main():
         },
         'validation': {
             'identity_response_exact_before_float32_cast': True,
+            'equality_identity_edge_response_zero': True,
+            'equality_dense_reference_via_chebyshev_product': True,
             'finite_responses_all_graphs': True,
             'dense_reference_checks': dense_reference_checks,
             'dense_reference_rtol': 1e-11,

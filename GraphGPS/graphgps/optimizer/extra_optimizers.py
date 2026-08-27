@@ -13,6 +13,49 @@ from torch_geometric.graphgym.optim import SchedulerConfig
 import torch_geometric.graphgym.register as register
 
 
+def create_specmose_adamw(model, base_lr, backbone_weight_decay,
+                          specmose_weight_decay):
+    """Create AdamW with stronger decay only on spectral encoder weights."""
+    specmose_parameters = []
+    backbone_parameters = []
+    specmose_names = []
+    for name, parameter in model.named_parameters():
+        is_filter_weight = name.endswith(
+            'encoder.edge_encoder.filter_mixer.weight'
+        )
+        is_template_weight = name.endswith(
+            'encoder.edge_encoder.template_mixer.weight'
+        )
+        is_structural_linear_weight = (
+            'encoder.edge_encoder.structural_encoder.lins.' in name
+            and name.endswith('.weight')
+        )
+        if is_filter_weight or is_template_weight or is_structural_linear_weight:
+            specmose_parameters.append(parameter)
+            specmose_names.append(name)
+        else:
+            backbone_parameters.append(parameter)
+
+    if not specmose_parameters:
+        raise ValueError('No SpecMoSE weights found for dedicated weight decay')
+    optimizer = AdamW(
+        [
+            {
+                'params': backbone_parameters,
+                'weight_decay': backbone_weight_decay,
+                'group_name': 'backbone',
+            },
+            {
+                'params': specmose_parameters,
+                'weight_decay': specmose_weight_decay,
+                'group_name': 'specmose_weights',
+            },
+        ],
+        lr=base_lr,
+    )
+    return optimizer, tuple(specmose_names)
+
+
 @register.register_optimizer('adagrad')
 def adagrad_optimizer(params: Iterator[Parameter], base_lr: float,
                       weight_decay: float) -> Adagrad:

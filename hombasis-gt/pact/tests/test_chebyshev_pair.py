@@ -4,6 +4,7 @@ import torch
 
 from pact.chebyshev_pair import (
     chebyshev_matrices,
+    edge_restricted_equality_responses,
     edge_restricted_pair_responses,
     shifted_normalized_laplacian,
     total_degree_pairs,
@@ -87,6 +88,28 @@ class ChebyshevPairTest(unittest.TestCase):
             permuted_edge_index, self.edge_signals
         )
         torch.testing.assert_close(actual, expected, rtol=1e-12, atol=1e-12)
+
+    def test_equality_responses_match_dense_two_sided_filtering(self):
+        _, polynomials, degree_pairs, _ = self._responses(
+            self.edge_index, self.edge_signals
+        )
+        actual = edge_restricted_equality_responses(
+            polynomials,
+            self.edge_index,
+            degree_pairs,
+        )
+        sources, targets = self.edge_index
+        identity = torch.eye(self.num_nodes, dtype=torch.float64)
+        expected = torch.stack([
+            (
+                polynomials[left_degree]
+                @ identity
+                @ polynomials[right_degree]
+            )[sources, targets]
+            for left_degree, right_degree in degree_pairs
+        ], dim=1)
+        torch.testing.assert_close(actual, expected, rtol=1e-12, atol=1e-12)
+        self.assertTrue(actual[:, 0].eq(0).all())
 
     def test_fixed_shifted_spectrum_is_in_chebyshev_interval(self):
         operator, _, _, _ = self._responses(
